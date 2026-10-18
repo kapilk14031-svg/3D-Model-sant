@@ -125,10 +125,11 @@ export function setupTacticalOperations(api: TacticalAPI) {
 
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
-      const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+      const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: true });
       const sprite = new THREE.Sprite(spriteMat);
-      sprite.position.set(0, 6.2, 0);
-      sprite.scale.set(16, 4.6, 1);
+      sprite.position.set(0, 5.5, 0);
+      sprite.scale.set(9, 2.58, 1);
+      sprite.userData = { isDutyBadge: true, baseW: 9, baseH: 2.58, aspect: 384 / 110 };
       g.add(sprite);
 
       g.userData = {

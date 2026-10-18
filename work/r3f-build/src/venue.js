@@ -551,12 +551,15 @@ function sign(text,u,v,y=8){
   tex.minFilter=THREE.LinearMipmapLinearFilter;
   let sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:true}));
   sprite.position.copy(pt(u,v,y));
-  sprite.scale.set(28,6.6,1);
+  sprite.scale.set(12,2.81,1);
   sprite.userData.label=text;
   sprite.userData.facilityId=facId;
   sprite.userData.category=cat.name;
   sprite.userData.priority=cat.prio;
   sprite.userData.isInteractiveLabel=true;
+  sprite.userData.baseW=12;
+  sprite.userData.baseH=2.81;
+  sprite.userData.aspect=512/120;
   scene.add(sprite);
   if(!globalThis.allSignSpritesList)globalThis.allSignSpritesList=[];
   globalThis.allSignSpritesList.push(sprite);
@@ -1254,11 +1257,15 @@ function createPoliceBadgeIcon(type,qty,label,isSelected){
   ctx.fillText(sub,146,148);
   
   const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;
-  const spriteMat=new THREE.SpriteMaterial({map:tex,depthTest:false,depthWrite:false});
+  const spriteMat=new THREE.SpriteMaterial({map:tex,depthTest:true,depthWrite:false});
   const sprite=new THREE.Sprite(spriteMat);
-  sprite.scale.set(25,10.8,1);
-  sprite.position.set(0,14.5,0);
-  sprite.renderOrder=999;
+  sprite.scale.set(10,4.3,1);
+  sprite.position.set(0,7.5,0);
+  sprite.renderOrder=10;
+  sprite.userData.isResourceBadge=true;
+  sprite.userData.baseW=10;
+  sprite.userData.baseH=4.3;
+  sprite.userData.aspect=512/220;
   return sprite;
 }
 
@@ -1362,19 +1369,6 @@ function animate(){
     );
     camera.lookAt(target);
     if(!bigPandal||!bigPandal.isInside()){
-      // Dynamic Label Density Control based on Zoom Distance (Improvement 2 & 5)
-      if(globalThis.pdfFineLabels){
-        globalThis.pdfFineLabels.children.forEach(o=>{
-          let name=(o.userData.feature?o.userData.feature[0]:'')||o.userData.label||'';
-          if(distance>340){
-            o.visible=/GATE 1|PANDAL|HOSPITAL|POLICE CHOWKI/i.test(name);
-          }else if(distance>220){
-            o.visible=/GATE|PANDAL|LANGAR|EXHIBITION|POLICE|HOSPITAL|PARKING|P1 |P2 |P3 /i.test(name);
-          }else{
-            o.visible=true;
-          }
-        });
-      }
       if(globalThis.smartVenueLabels)globalThis.smartVenueLabels();
     }
   }
@@ -2100,9 +2094,10 @@ $('#pdfIndex').addEventListener('change',e=>{
     c.fillStyle='#0f5a34';c.fillRect(0,0,512,90);
     c.strokeStyle='#ffffff';c.lineWidth=4;c.strokeRect(4,4,504,82);
     c.fillStyle='white';c.textAlign='center';c.font='bold 28px Arial';c.fillText(f[0],256,54);
-    focusLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthTest:false}));
-    focusLabel.position.copy(pt(f[1],f[2],f[5]+6));
-    focusLabel.scale.set(32,5.6,1);
+    focusLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthTest:true}));
+    focusLabel.position.copy(pt(f[1],f[2],f[5]+3.2));
+    focusLabel.scale.set(9.5,1.67,1);
+    focusLabel.userData={isFocusBadge:true,baseW:9.5,baseH:1.67,aspect:512/90};
     scene.add(focusLabel);
   }
 });
@@ -2167,12 +2162,15 @@ function featureLabel(f){
   tex.generateMipmaps=true;
   tex.minFilter=THREE.LinearMipmapLinearFilter;
   let sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:true}));
-  sp.position.copy(pt(u,v,f[5]+2.2));
-  sp.scale.set(22,4.8,1);
+  sp.position.copy(pt(u,v,f[5]+1.8));
+  sp.scale.set(10,2.15,1);
   sp.userData.feature=f;
   sp.userData.facilityId=facId;
   sp.userData.isInteractiveLabel=true;
   sp.userData.label=text;
+  sp.userData.baseW=10;
+  sp.userData.baseH=2.15;
+  sp.userData.aspect=512/110;
   fineLabels.add(sp);
 }
 pdfFeatures.forEach(featureLabel);
@@ -2301,23 +2299,147 @@ panels.view.prepend(trafficButton);
 let h1=document.querySelector('.vc-title')||document.querySelector('header h1');if(h1)h1.textContent='VENUE COMMAND';
 let hSmall=document.querySelector('.vc-subtitle')||document.querySelector('header small');if(hSmall)hSmall.textContent='Security & Deployment System';
 
-// Smart Venue Labels
+// Smart Venue Labels: Zoom-Adaptive Dynamic Scaling & Occlusion
 globalThis.smartVenueLabels=()=>{
   camera.updateMatrixWorld();
+  const fovRad=THREE.MathUtils.degToRad(camera.fov/2);
+  const tanFov=Math.tan(fovRad);
+  const clientH=canvas.clientHeight||800;
+  const clientW=canvas.clientWidth||1200;
+
+  const showSigns=$('#layerLabels')?$('#layerLabels').checked:($('#signsToggle')?$('#signsToggle').checked:true);
+  const showFine=fineLabels&&fineLabels.visible;
+
   let candidates=[];
-  let showSigns = $('#layerLabels') ? $('#layerLabels').checked : ($('#signsToggle') ? $('#signsToggle').checked : true);
-  if(showSigns)allSignSprites.forEach(o=>candidates.push({o,priority:/GATE|PANDAL|FLYOVER/.test(o.userData.label||'')?0:2}));
-  else allSignSprites.forEach(o=>o.visible=false);
-  if(fineLabels.visible)fineLabels.children.forEach(o=>candidates.push({o,priority:1}));
+
+  // 1. Sign sprites (Gate signs, arterial posts)
+  if(showSigns&&allSignSprites){
+    allSignSprites.forEach(o=>{
+      const isMajor=/GATE|PANDAL|FLYOVER|HOSPITAL|LANGAR/i.test(o.userData.label||'');
+      if(distance>350&&!isMajor){
+        o.visible=false;
+      }else{
+        candidates.push({o,type:'sign',priority:isMajor?0:2});
+      }
+    });
+  }else if(allSignSprites){
+    allSignSprites.forEach(o=>o.visible=false);
+  }
+
+  // 2. Fine landmark labels (from PDF register)
+  if(showFine&&fineLabels&&fineLabels.children){
+    fineLabels.children.forEach(o=>{
+      let name=(o.userData.feature?o.userData.feature[0]:'')||o.userData.label||'';
+      let keep=true;
+      if(distance>340)keep=/GATE 1|PANDAL|HOSPITAL|POLICE CHOWKI/i.test(name);
+      else if(distance>220)keep=/GATE|PANDAL|LANGAR|EXHIBITION|POLICE|HOSPITAL|PARKING|P1 |P2 |P3 /i.test(name);
+      if(keep){
+        candidates.push({o,type:'fine',priority:1});
+      }else{
+        o.visible=false;
+      }
+    });
+  }
+
+  // 3. Facility 3D Model interactive billboards
+  if(facilityModels&&facilityModels.interactiveBillboards){
+    const insideFacility=facilityModels.isInsideAny&&facilityModels.isInsideAny();
+    facilityModels.interactiveBillboards.forEach(o=>{
+      if(insideFacility){
+        o.visible=false;
+      }else{
+        candidates.push({o,type:'facility',priority:0});
+      }
+    });
+  }
+
+  // 4. Resource Badges (Duty points, morchas, police checkpoints)
+  if(resources&&resources.children){
+    resources.children.forEach(g=>{
+      g.children.forEach(child=>{
+        if(child.isSprite&&child.userData.isResourceBadge){
+          candidates.push({o:child,type:'resource',priority:1});
+        }
+      });
+    });
+  }
+
+  // 5. Active focus marker (from jump menu)
+  if(focusLabel&&focusLabel.parent){
+    candidates.push({o:focusLabel,type:'focus',priority:-1});
+  }
+
+  // Sort candidates by priority and closeness to focus target
   candidates.sort((a,b)=>a.priority-b.priority||a.o.position.distanceToSquared(target)-b.o.position.distanceToSquared(target));
-  let occupied=[],shown=0;
-  for(let {o} of candidates){
-    let pp=o.position.clone().project(camera),dep=o.position.distanceTo(camera.position),width=Math.min(125,Math.max(85,canvas.clientWidth*.09)),units=2*dep*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))/canvas.clientHeight;
-    let sx=(pp.x+1)*canvas.clientWidth/2,sy=(1-pp.y)*canvas.clientHeight/2;
-    let rect=[sx-width/2-5,sy-12,width+10,24];
+
+  let occupied=[];
+  let shownCount=0;
+  const maxShown=distance<160?26:16;
+
+  for(let {o,type} of candidates){
+    let dep=o.position.distanceTo(camera.position);
+
+    // units = meters per screen pixel at distance dep
+    let units=(2*dep*tanFov)/clientH;
+
+    // Target screen width in pixels based on camera distance dep
+    // At far zoom (dep > 250m): ~100-115px
+    // At medium zoom (dep ~ 100-250m): ~85-100px
+    // At close zoom (dep < 80m): gracefully shrink down to 50-75px so it never blocks buildings/personnel!
+    let targetPxW;
+    if(type==='focus'){
+      targetPxW=dep<50?65:(dep<120?85:105);
+    }else if(type==='resource'){
+      targetPxW=dep<50?56:(dep<120?72:92);
+    }else if(type==='facility'){
+      targetPxW=dep<50?68:(dep<120?88:110);
+    }else{
+      targetPxW=dep<50?62:(dep<120?82:100);
+    }
+
+    targetPxW=Math.min(targetPxW,clientW*0.10);
+
+    let baseW=o.userData.baseW||11;
+    let baseH=o.userData.baseH||2.6;
+    let aspect=o.userData.aspect||(baseW/baseH);
+
+    // Scale dynamically with zoom
+    let dynamicW=Math.min(baseW,targetPxW*units);
+    if(dep<50){
+      dynamicW=Math.min(dynamicW,Math.max(1.5,dep*0.07));
+    }
+    let dynamicH=dynamicW/aspect;
+
+    // Screen projection
+    let pp=o.position.clone().project(camera);
+    let sx=(pp.x+1)*clientW/2;
+    let sy=(1-pp.y)*clientH/2;
+
+    let screenW=dynamicW/units;
+    let screenH=dynamicH/units;
+    let rect=[sx-screenW/2-2,sy-screenH/2-2,screenW+4,screenH+4];
+
+    let inFrustum=pp.z>-1&&pp.z<1&&sx>15&&sx<clientW-20&&sy>35&&sy<clientH-70;
     let overlap=occupied.some(r=>rect[0]<r[0]+r[2]&&rect[0]+rect[2]>r[0]&&rect[1]<r[1]+r[3]&&rect[1]+rect[3]>r[1]);
-    o.visible=pp.z>-1&&pp.z<1&&sx>15&&sx<canvas.clientWidth-20&&sy>30&&sy<canvas.clientHeight-115&&!overlap&&shown<14;
-    if(o.visible){o.scale.set(width*units,16*units,1);occupied.push(rect);shown++;}
+
+    let isSelectedResource=o.parent&&o.parent.userData&&o.parent.userData.index===selected;
+    let isFocus=type==='focus';
+    let forceShow=(isSelectedResource||isFocus)&&inFrustum;
+
+    let shouldShow=inFrustum&&(!overlap||forceShow)&&(shownCount<maxShown||forceShow);
+
+    // Suppress distant background clutter when zoomed in close to a specific ground location
+    if(distance<140&&dep>320&&type!=='resource'){
+      shouldShow=false;
+    }
+
+    o.visible=shouldShow;
+
+    if(shouldShow){
+      o.scale.set(dynamicW,dynamicH,1);
+      occupied.push(rect);
+      shownCount++;
+    }
   }
 };
 

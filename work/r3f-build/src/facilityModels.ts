@@ -1186,11 +1186,11 @@ export function createFacilityModels({
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.anisotropy = 8;
-    const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: true });
     const sprite = new THREE.Sprite(spriteMat);
-    sprite.position.set(pos.x, pos.y + 14, pos.z);
-    sprite.scale.set(18, 4.5, 1);
-    sprite.userData = { isFacilitySign: true, facilityId: facId };
+    sprite.position.set(pos.x, pos.y + 7.5, pos.z);
+    sprite.scale.set(11, 2.58, 1);
+    sprite.userData = { isFacilitySign: true, facilityId: facId, baseW: 11, baseH: 2.58, aspect: 1024 / 240 };
     scene.add(sprite);
     interactiveBillboards.push(sprite);
   }
