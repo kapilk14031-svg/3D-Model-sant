@@ -1,0 +1,2 @@
+from pathlib import Path
+p=Path('src/main.tsx');s=p.read_text(encoding='utf8');s=s.replace('root.configure({size:{width:v.canvas.clientWidth,height:v.canvas.clientHeight,top:0,left:0}})','root.configure({gl:v.renderer,camera:v.camera,scene:v.scene,frameloop:\'always\',dpr:Math.min(devicePixelRatio,2),size:{width:v.canvas.clientWidth,height:v.canvas.clientHeight,top:0,left:0}})');p.write_text(s,encoding='utf8')

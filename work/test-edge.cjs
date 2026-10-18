@@ -1,0 +1,3 @@
+const {chromium}=require('C:/Users/HP/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+(async()=>{let browser=await chromium.launch({channel:'msedge',headless:true,args:['--allow-file-access-from-files']});let page=await browser.newPage({viewport:{width:1400,height:950}});page.on('pageerror',e=>console.log('ERROR',e.message));await page.goto('file:///C:/Users/HP/Documents/Codex/2026-10-17/us/outputs/e-bandobast-3d.html');await page.waitForTimeout(4000);await page.screenshot({path:'C:/Users/HP/Documents/Codex/2026-10-17/us/work/realistic-preview.png'});console.log(await page.evaluate(()=>({meshes:scene.children.length,webgl:!!renderer.getContext(),resources:items.length})));await browser.close()})()
+

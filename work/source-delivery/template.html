@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>VENUE COMMAND C4I · Surveillance & Security Operations Center</title>
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg-dark: #0B1220;
+      --card-bg: #111C2E;
+      --card-border: #1E293B;
+      --card-header-bg: #152238;
+      --accent: #38BDF8;
+      --accent-dark: #0284C7;
+      --emerald: #22C55E;
+      --amber: #F59E0B;
+      --red: #EF4444;
+      --blue: #3B82F6;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: var(--bg-dark); color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* TOP-LEVEL APP WRAPPER */
+    .vc-app {
+      display: flex; flex-direction: column; height: 100vh; width: 100vw;
+      padding: 8px 10px 10px; gap: 8px;
+    }
+
+    /* 3. PROFESSIONAL TOP NAVIGATION BAR */
+    .vc-header {
+      height: 48px; min-height: 48px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; padding: 0 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      z-index: 100;
+    }
+    .vc-brand {
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .vc-brand-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.3), rgba(56, 189, 248, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+    .vc-title-wrap {
+      display: flex; flex-direction: column;
+    }
+    .vc-title {
+      font-size: 14px; font-weight: 800; letter-spacing: 1.2px;
+      color: #fff; margin: 0; line-height: 1.1;
+    }
+    .vc-subtitle {
+      font-size: 10px; color: var(--text-muted); font-weight: 500;
+      letter-spacing: 0.2px; margin-top: 1px;
+    }
+
+    /* TOP NAV STATS & TELEMETRY */
+    .vc-header-center {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .vc-live-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35);
+      padding: 4px 10px; border-radius: 20px;
+      color: #4ade80; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    }
+    .vc-live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--emerald); box-shadow: 0 0 8px var(--emerald);
+      animation: vcPulse 2s infinite ease-in-out;
+    }
+    @keyframes vcPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.6; }
+    }
+    .vc-clock-wrap {
+      display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted);
+      border-left: 1px solid var(--card-border); padding-left: 14px;
+    }
+    .vc-clock { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
+
+    /* TOP NAV RIGHT ACTIONS */
+    .vc-header-actions {
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .vc-nav-btn {
+      background: #142134; border: 1px solid #24354c;
+      border-radius: 7px; color: #cbd5e1; font-size: 11px; font-weight: 600;
+      padding: 5px 10px; cursor: pointer; width: auto; margin: 0;
+      display: flex; align-items: center; gap: 6px; transition: all 0.15s;
+    }
+    .vc-nav-btn:hover { background: #1b2e47; color: #fff; border-color: var(--accent); }
+    .vc-alert-btn {
+      background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .vc-alert-btn:hover { background: rgba(239, 68, 68, 0.25); border-color: #f87171; }
+    .vc-user-profile {
+      display: flex; align-items: center; gap: 8px;
+      background: #142134; border: 1px solid #24354c;
+      border-radius: 20px; padding: 4px 10px 4px 6px;
+      font-size: 11px; color: #e2e8f0; cursor: pointer;
+    }
+    .vc-user-avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: bold; color: #fff;
+    }
+
+    /* MAIN DASHBOARD LAYOUT (Left Sidebar 290px, Map gets 78-82%) */
+    .vc-layout {
+      display: grid; grid-template-columns: 290px 1fr;
+      flex: 1; min-height: 0; gap: 8px; position: relative;
+    }
+
+    /* 1. COMPACT LEFT SIDEBAR */
+    .vc-sidebar-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; display: flex; flex-direction: column;
+      overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+    .vc-sidebar-header {
+      padding: 10px 12px 8px; border-bottom: 1px solid var(--card-border);
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--card-header-bg);
+    }
+    .vc-sidebar-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+      color: var(--accent); text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .vc-sidebar-badge {
+      font-size: 9px; padding: 2px 6px; border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15); color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3); font-weight: 700;
+    }
+    aside {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 8px 10px;
+    }
+    aside::-webkit-scrollbar { width: 4px; }
+    aside::-webkit-scrollbar-thumb { background: #1f334d; border-radius: 3px; }
+    aside::-webkit-scrollbar-track { background: transparent; }
+
+    /* COLLAPSIBLE ACCORDIONS */
+    .vc-accordion {
+      background: #142033; border: 1px solid #1e3048;
+      border-radius: 8px; margin-bottom: 8px; overflow: hidden;
+      transition: border-color 0.15s ease;
+    }
+    .vc-accordion[open] {
+      border-color: #2b4566;
+    }
+    .vc-accordion summary {
+      padding: 8px 10px; font-size: 11px; font-weight: 700;
+      color: #cbd5e1; cursor: pointer; user-select: none;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #16243a; outline: none; transition: background 0.15s;
+    }
+    .vc-accordion summary:hover {
+      background: #1c2e47; color: #fff;
+    }
+    .vc-accordion-body {
+      padding: 10px; font-size: 11px; color: #94a3b8;
+      border-top: 1px solid #1a2c42;
+    }
+
+    /* CONTROLS & FORM ELEMENTS IN SIDEBAR */
+    button, select, input {
+      background: #17263c; color: #f1f5f9; border: 1px solid #273e5c;
+      border-radius: 6px; padding: 6px 8px; width: 100%; margin: 3px 0;
+      font-size: 11px; font-family: inherit; transition: all 0.15s;
+    }
+    button { cursor: pointer; font-weight: 600; }
+    button:hover { background: #203552; border-color: var(--accent); }
+    button.primary {
+      background: #0284c7; border-color: #38bdf8; color: #fff;
+    }
+    button.primary:hover {
+      background: #0369a1; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+    label { display: block; line-height: 1.4; margin: 4px 0; font-size: 11px; color: #cbd5e1; }
+    .check { width: auto; margin-right: 6px; vertical-align: middle; cursor: pointer; }
+    .slider-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2px; font-size: 11px; color: #94a3b8;
+    }
+    .slider-val {
+      font-family: monospace; font-size: 11px; color: var(--accent);
+      font-weight: 700; background: #0c1624; padding: 1px 6px; border-radius: 4px;
+    }
+    .preset-btn-group {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px;
+    }
+    .preset-btn {
+      padding: 5px; font-size: 10px; background: #16263b; border: 1px solid #273e5a;
+      border-radius: 5px; color: #cbd5e1; text-align: center;
+    }
+    .preset-btn:hover { background: #1f3654; color: #fff; border-color: var(--accent); }
+
+    /* 2. 3D MAP MAIN FOCUS VIEWPORT */
+    .vc-map-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; display: flex; flex-direction: column;
+      overflow: hidden; position: relative; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+      min-width: 0; min-height: 0;
+    }
+    #viewport {
+      flex: 1; position: relative; min-width: 0; min-height: 0;
+      background: #070e17; overflow: hidden;
+    }
+    canvas#c {
+      width: 100%; height: 100%; display: block; touch-action: none;
+    }
+
+    /* HUD CONTROLS (Top Right of 3D Map) */
+    .vc-hud-controls {
+      position: absolute; top: 12px; right: 12px; z-index: 60;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .vc-hud-btn {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: rgba(17, 28, 46, 0.88); backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.35); color: #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; cursor: pointer; padding: 0; width: 34px; margin: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: all 0.15s;
+    }
+    .vc-hud-btn:hover {
+      background: rgba(2, 132, 199, 0.4); border-color: var(--accent);
+      color: #fff; transform: scale(1.05);
+    }
+    .vc-compass-wrap {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: rgba(17, 28, 46, 0.88); backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.35); position: relative;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .vc-compass-needle {
+      width: 2px; height: 22px; position: relative;
+      transition: transform 0.1s linear;
+    }
+    .vc-compass-needle::before {
+      content: ''; position: absolute; top: 0; left: -3px;
+      border-left: 4px solid transparent; border-right: 4px solid transparent;
+      border-bottom: 10px solid #ef4444;
+    }
+    .vc-compass-needle::after {
+      content: ''; position: absolute; bottom: 0; left: -3px;
+      border-left: 4px solid transparent; border-right: 4px solid transparent;
+      border-top: 10px solid #94a3b8;
+    }
+
+    /* 6. REDESIGNED BOTTOM COMMAND TOOLBAR */
+    .vc-bottom-toolbar {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      z-index: 60; display: flex; align-items: center; gap: 4px;
+      background: rgba(17, 28, 46, 0.92); backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 30px;
+      padding: 4px 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+    .vc-tb-btn {
+      background: transparent; border: 1px solid transparent; border-radius: 20px;
+      padding: 6px 14px; color: #cbd5e1; font-size: 11px; font-weight: 600;
+      cursor: pointer; width: auto; margin: 0; display: flex; align-items: center; gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .vc-tb-btn:hover {
+      background: rgba(255, 255, 255, 0.08); color: #fff;
+    }
+    .vc-tb-btn.active {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff; border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+    }
+    .vc-tb-sep {
+      width: 1px; height: 18px; background: #273e5c; margin: 0 2px;
+    }
+
+    /* AREA ZOOM OVERLAY BANNER */
+    #boxZoomOverlay {
+      position: absolute; border: 2px dashed #38bdf8;
+      background: rgba(56, 189, 248, 0.15); display: none;
+      pointer-events: none; z-index: 55;
+    }
+    #boxZoomBanner {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(2, 132, 199, 0.92); backdrop-filter: blur(8px);
+      border: 1px solid #38bdf8; border-radius: 20px;
+      padding: 6px 16px; color: #fff; font-size: 11px; font-weight: 600;
+      display: none; align-items: center; gap: 8px; z-index: 65;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    /* 2 & 5. CLICKABLE MAP LABEL DETAILS POPUP */
+    .vc-detail-popup {
+      position: absolute; top: 14px; left: 14px; width: 330px;
+      background: rgba(17, 28, 46, 0.96); backdrop-filter: blur(14px);
+      border: 1px solid var(--accent); border-radius: 12px;
+      padding: 14px; box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+      display: none; flex-direction: column; gap: 10px; z-index: 80;
+      animation: vcSlidePopup 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes vcSlidePopup {
+      from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .dp-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 1px solid #20344d; padding-bottom: 8px;
+    }
+    .dp-badge {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.6px;
+      padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .badge-sec { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid #ef4444; }
+    .badge-med { background: rgba(34, 197, 94, 0.2); color: #86efac; border: 1px solid #22c55e; }
+    .badge-gate { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid #3b82f6; }
+    .badge-fac { background: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid #f59e0b; }
+    .dp-title {
+      font-size: 14px; font-weight: 700; color: #fff; margin-top: 4px;
+    }
+    .dp-close-btn {
+      background: none; border: none; color: #94a3b8; font-size: 16px;
+      cursor: pointer; width: auto; margin: 0; padding: 2px;
+    }
+    .dp-close-btn:hover { color: #fff; }
+    .dp-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px;
+    }
+    .dp-item {
+      background: #152438; border-radius: 6px; padding: 6px 8px;
+    }
+    .dp-label { color: #94a3b8; font-size: 10px; margin-bottom: 2px; }
+    .dp-val { color: #f1f5f9; font-weight: 600; }
+    .dp-desc {
+      font-size: 11px; color: #cbd5e1; line-height: 1.45;
+      background: #142134; border-radius: 6px; padding: 8px; border-left: 3px solid var(--accent);
+    }
+    .dp-actions {
+      display: flex; gap: 6px; margin-top: 4px;
+    }
+    .dp-actions button {
+      padding: 7px 10px; font-size: 11px; margin: 0;
+    }
+
+    /* ALERTS DRAWER */
+    .vc-alerts-drawer {
+      position: fixed; top: 60px; right: 12px; width: 330px;
+      background: #111C2E; border: 1px solid #ef4444; border-radius: 10px;
+      padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      display: none; z-index: 2000; font-size: 11px;
+    }
+    .vc-alert-item {
+      background: #17263b; border-radius: 6px; padding: 10px;
+      margin-bottom: 8px; border-left: 3px solid #ef4444;
+    }
+
+    /* REACT 3D ASSETS ROOT MOUNT */
+    #root {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 70;
+    }
+    #root > * {
+      pointer-events: auto;
+    }
+
+    /* COMPATIBILITY HELPERS */
+    #status, #hint {
+      font-size: 10px; color: #94a3b8; line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="vc-app">
+    <!-- 3. PROFESSIONAL TOP NAVIGATION -->
+    <header class="vc-header">
+      <div class="vc-brand">
+        <div class="vc-brand-icon">🛡️</div>
+        <div class="vc-title-wrap">
+          <h1 class="vc-title">VENUE COMMAND C4I</h1>
+          <div class="vc-subtitle">78th Nirankari Samagam · Security Operations Center</div>
+        </div>
+      </div>
+
+      <!-- STATUS & CLOCK TELEMETRY -->
+      <div class="vc-header-center">
+        <div class="vc-live-badge">
+          <span class="vc-live-dot"></span>
+          <span>● LIVE SIMULATION</span>
+        </div>
+        <div class="vc-clock-wrap">
+          <span>IST:</span>
+          <span id="topClock" class="vc-clock">12:00:00</span>
+          <span style="color:#22c55e">● Synced</span>
+        </div>
+      </div>
+
+      <!-- RIGHT HEADER ACTIONS -->
+      <div class="vc-header-actions">
+        <!-- Alerts Drawer Toggle -->
+        <button id="vcAlertsBtn" class="vc-nav-btn vc-alert-btn">
+          <span>🔔</span> Incidents (<b id="alertBadgeCount">3</b>)
+        </button>
+
+        <!-- User Profile Pill -->
+        <div class="vc-user-profile" title="Operator Profile">
+          <div class="vc-user-avatar">R</div>
+          <span>Insp. R. Sharma (HQ)</span>
+          <span style="color:#22c55e; font-size:8px">●</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="vc-layout">
+      <!-- 1. COMPACT LEFT SIDEBAR (290px) -->
+      <div class="vc-sidebar-card">
+        <div class="vc-sidebar-header">
+          <div class="vc-sidebar-title">
+            <span>🎛️ OPERATIONS PANEL</span>
+          </div>
+          <span class="vc-sidebar-badge">SOC C4I</span>
+        </div>
+
+        <aside>
+          <!-- ACCORDION 1: MAP LAYERS -->
+          <details id="secLayers" class="vc-accordion" open>
+            <summary>
+              <span>⊞ Map Layers</span>
+              <span style="font-size:10px; color:#38bdf8">Active</span>
+            </summary>
+            <div class="vc-accordion-body" id="layersSectionContent">
+              <label><input id="land" type="checkbox" class="check" checked> 3D Structures & Pavilions</label>
+              <label><input id="layerFarmland" type="checkbox" class="check" checked> Rural Farmlands & Boundary</label>
+              <label><input id="layerTrees" type="checkbox" class="check" checked> Foliage & Boundary Trees</label>
+              <label><input id="layerLabels" type="checkbox" class="check" checked> Sector & Facility Labels</label>
+              <label><input id="scanToggle" type="checkbox" class="check"> Scanned Blueprint Overlay</label>
+              
+              <div style="margin-top:8px">
+                <label>Lighting Mode
+                  <select id="envMode" style="margin-top:2px">
+                    <option value="day">☀️ Bright Daylight</option>
+                    <option value="sunset">🌅 Golden Sunset</option>
+                    <option value="night">🌙 Night Bandobast (Floodlights)</option>
+                  </select>
+                </label>
+                <div class="slider-row" style="margin-top:6px">
+                  <span>Daylight Brightness</span>
+                  <span id="brightVal" class="slider-val">105%</span>
+                </div>
+                <input id="brightness" type="range" min="60" max="140" value="105">
+              </div>
+            </div>
+          </details>
+
+          <!-- ACCORDION 2: SECURITY & DEPLOYMENT -->
+          <details id="secDeploy" class="vc-accordion" open>
+            <summary>
+              <span>🛡️ Security & Deployment</span>
+              <span style="font-size:10px; color:#22c55e">Forces</span>
+            </summary>
+            <div class="vc-accordion-body" id="deploySectionContent">
+              <label>Deploy Resource Type
+                <select id="type" style="margin-top:2px">
+                  <option value="officer">👮 Police Officers (QRT / Static)</option>
+                  <option value="barricade">🚧 Tactical Barricade</option>
+                  <option value="traffic">🚦 Traffic Duty Post</option>
+                  <option value="medical">🏥 Medical First Aid Point</option>
+                  <option value="command">🏛️ Sector Command Post</option>
+                  <option value="cctv">📹 PTZ CCTV Surveillance</option>
+                  <option value="water">💧 Seva Drinking Water</option>
+                  <option value="access">🚪 Emergency Access Egress</option>
+                </select>
+              </label>
+              <button class="primary" id="place">📍 Place Resource on Map</button>
+              
+              <div style="margin-top:10px">
+                <div style="font-size:10px; font-weight:700; color:#8ca3c0; margin-bottom:4px; text-transform:uppercase">Selected Resource</div>
+                <div id="selected" style="font-size:11px; color:#cbd5e1">Click any officer or marker to edit.</div>
+              </div>
+
+              <div style="margin-top:10px">
+                <div style="font-size:10px; font-weight:700; color:#8ca3c0; margin-bottom:4px; text-transform:uppercase">Deployment Totals</div>
+                <div id="counts" style="line-height:1.7; font-size:11px"></div>
+              </div>
+            </div>
+          </details>
+
+          <!-- ACCORDION 3: ROUTES & TRAFFIC -->
+          <details id="secRoutes" class="vc-accordion">
+            <summary>
+              <span>🛣️ Routes & Traffic</span>
+              <span style="font-size:10px; color:#f59e0b">Transit</span>
+            </summary>
+            <div class="vc-accordion-body">
+              <div id="routeSectionContent"></div>
+              <div id="crowdSectionContent" style="margin-top:10px"></div>
+              
+              <div style="margin-top:10px; padding-top:8px; border-top:1px solid #1e3048">
+                <label><input id="toggleHighwayTraffic" type="checkbox" class="check"> Preview GT Road Highway Traffic</label>
+                <div class="preset-btn-group">
+                  <button id="presetVip" class="preset-btn">👑 Focus VIP Gate 1</button>
+                  <button id="presetPeak" class="preset-btn">👥 Focus Main Pandal</button>
+                  <button id="presetEmerg" class="preset-btn" style="grid-column:span 2">🚑 Emergency Green Corridor</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- ACCORDION 4: CAMERA SLIDERS (REDESIGNED WITH LIVE VALUES) -->
+          <details id="secCamera" class="vc-accordion">
+            <summary>
+              <span>🎥 Camera Sliders</span>
+              <span style="font-size:10px; color:#94a3b8">Orbit</span>
+            </summary>
+            <div class="vc-accordion-body" id="cameraSectionContent">
+              <div class="slider-row">
+                <span>Camera Height / Tilt</span>
+                <span id="tiltVal" class="slider-val">38°</span>
+              </div>
+              <input id="tilt" type="range" min="0" max="65" value="38">
+
+              <div class="slider-row" style="margin-top:8px">
+                <span>Viewing Distance</span>
+                <span id="zoomVal" class="slider-val">480m</span>
+              </div>
+              <input id="zoom" type="range" min="50" max="220" value="90">
+
+              <div class="slider-row" style="margin-top:8px">
+                <span>Camera Azimuth / Yaw</span>
+                <span id="yawVal" class="slider-val">-12°</span>
+              </div>
+              <input id="yaw" type="range" min="-180" max="180" value="-12">
+            </div>
+          </details>
+
+          <!-- ACCORDION 5: TOOLS & EXPORT -->
+          <details id="secTools" class="vc-accordion">
+            <summary>
+              <span>⚡ Tools & Export</span>
+              <span style="font-size:10px; color:#94a3b8">Files</span>
+            </summary>
+            <div class="vc-accordion-body" id="toolsSectionContent">
+              <button id="save">💾 Download Deployment JSON</button>
+              <button id="load">📂 Open Deployment JSON</button>
+              <input hidden id="file" type="file" accept=".json">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px">
+                <button id="png">📸 Save PNG</button>
+                <button id="obj">🧊 Export OBJ</button>
+              </div>
+              <button id="btnExportCsv" style="background:#162a3f">📊 Export Officer CSV Roster</button>
+              <button id="reset" style="background:#261818; border-color:#5c2424; color:#fca5a5; margin-top:6px">🔄 Restore Default Plan</button>
+              <div id="status" style="margin-top:6px"></div>
+            </div>
+          </details>
+        </aside>
+      </div>
+
+      <!-- 2. 3D MAP MAIN FOCUS CARD (78-82% SCREEN) -->
+      <div class="vc-map-card">
+        <div id="viewport">
+          <canvas id="c"></canvas>
+
+          <!-- REACT FIBER 3D ASSETS DRAWER MOUNT -->
+          <div id="root"></div>
+
+          <!-- HUD MAP CONTROLS (Top-Right) -->
+          <div class="vc-hud-controls">
+            <button id="hudZoomInBtn" class="vc-hud-btn" title="Zoom In (+)">➕</button>
+            <button id="hudZoomOutBtn" class="vc-hud-btn" title="Zoom Out (−)">➖</button>
+            <div id="hudCompass" class="vc-compass-wrap" title="Click to Reset North (N)">
+              <div id="compassNeedle" class="vc-compass-needle"></div>
+            </div>
+            <button id="hudResetBtn" class="vc-hud-btn" title="Reset View">🔄</button>
+            <button id="hudFullscreenBtn" class="vc-hud-btn" title="Toggle Fullscreen">⛶</button>
+          </div>
+
+          <!-- 6. REDESIGNED BOTTOM COMMAND TOOLBAR -->
+          <div class="vc-bottom-toolbar">
+            <button id="btnToolbar3D" class="vc-tb-btn active">
+              <span>🌐</span> 3D View
+            </button>
+            <button id="btnToolbarPlan" class="vc-tb-btn">
+              <span>🗺</span> Plan View
+            </button>
+            <button id="btnToolbarFly" class="vc-tb-btn">
+              <span>🚁</span> Fly Around
+            </button>
+            <div class="vc-tb-sep"></div>
+            <button id="btnToolbarStreet" class="vc-tb-btn">
+              <span>🚶</span> Street View
+            </button>
+            <button id="btnToolbarAreaZoom" class="vc-tb-btn">
+              <span>⬚</span> Area Zoom
+            </button>
+            <div class="vc-tb-sep"></div>
+            <button id="btnToolbarReset" class="vc-tb-btn">
+              <span>🔄</span> Reset
+            </button>
+          </div>
+
+          <!-- AREA RECTANGLE ZOOM DRAG OVERLAY & BANNER -->
+          <div id="boxZoomOverlay"></div>
+          <div id="boxZoomBanner">
+            <span>⬚</span> <b>Area Zoom Mode:</b> Drag a rectangle on the map to enlarge that sector.
+          </div>
+
+          <!-- 2 & 5. CLICKABLE MAP LABEL DETAILS POPUP -->
+          <div id="labelDetailPopup" class="vc-detail-popup">
+            <div class="dp-header">
+              <div>
+                <span id="dpCategoryBadge" class="dp-badge badge-gate">🚪 GATE</span>
+                <div id="dpTitle" class="dp-title">Gate 1 (VIP & Main Entry)</div>
+              </div>
+              <button id="dpCloseBtn" class="dp-close-btn" title="Close Popup">✕</button>
+            </div>
+            <div class="dp-grid">
+              <div class="dp-item">
+                <div class="dp-label">SECTOR / ZONE</div>
+                <div id="dpSector" class="dp-val">Sector A (VIP)</div>
+              </div>
+              <div class="dp-item">
+                <div class="dp-label">DUTY INCHARGE</div>
+                <div id="dpOfficer" class="dp-val">Insp. Rajesh Kumar</div>
+              </div>
+              <div class="dp-item">
+                <div class="dp-label">DEPLOYED CAPACITY</div>
+                <div id="dpCapacity" class="dp-val">4 Officers · 1 PCR</div>
+              </div>
+              <div class="dp-item">
+                <div class="dp-label">STATUS</div>
+                <div id="dpStatus" class="dp-val" style="color:#22c55e">● SECURE / LIVE</div>
+              </div>
+            </div>
+            <div id="dpDescription" class="dp-desc">
+              VVIP ceremonial entry and official convoy reception point with perimeter surveillance and metal detector gates.
+            </div>
+            <div class="dp-actions">
+              <button id="dpModelBtn" class="primary" style="flex:1">⬡ Open 3D Model</button>
+              <button id="dpFocusBtn" style="flex:1; background:#1b2e47">🎯 Focus View</button>
+            </div>
+          </div>
+
+          <!-- Hint Footer -->
+          <div id="hint" style="position:absolute; bottom:14px; right:16px; background:rgba(11,22,38,0.85); backdrop-filter:blur(6px); padding:4px 10px; border-radius:20px; font-size:10px; pointer-events:none; border:1px solid #1a3048; z-index:50">
+            Shift+Drag: Rectangle Zoom · Click label/building for Sector Details · Wheel: Zoom
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS TRIAGE DRAWER -->
+  <div id="vcAlertsDrawer" class="vc-alerts-drawer">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #334155; padding-bottom:6px">
+      <b style="color:#f87171; font-size:12px">🚨 Active Incidents & Alerts (3)</b>
+      <button id="closeAlertsDrawer" style="background:none; border:none; color:#94a3b8; font-size:14px; cursor:pointer; width:auto; margin:0">✕</button>
+    </div>
+    <div class="vc-alert-item">
+      <div style="font-weight:bold; color:#fecaca">⚠️ Stampede Bottleneck Alert (FOB 1)</div>
+      <div style="color:#cbd5e1; margin:3px 0">Density 4.5 p/m² at Foot Over Bridge 1 ramp. Rapid clearance required.</div>
+      <button onclick="alert('Dispatching QRT to FOB 1'); this.textContent='✅ QRT Dispatched'; this.disabled=true;" style="padding:4px 8px; font-size:10px; background:#0284c7; border:none; border-radius:4px; color:#fff; margin-top:4px">Dispatch QRT</button>
+    </div>
+    <div class="vc-alert-item" style="border-left-color:#f59e0b">
+      <div style="font-weight:bold; color:#fed7aa">🚑 Medical Assistance Request</div>
+      <div style="color:#cbd5e1; margin:3px 0">Elderly devotee dehydration report near Langar Complex 2.</div>
+      <button onclick="alert('Green Corridor cleared for Ambulance 2'); this.textContent='✅ Corridor Cleared'; this.disabled=true;" style="padding:4px 8px; font-size:10px; background:#16a34a; border:none; border-radius:4px; color:#fff; margin-top:4px">Dispatch Ambulance</button>
+    </div>
+    <div class="vc-alert-item" style="border-left-color:#38bdf8">
+      <div style="font-weight:bold; color:#bae6fd">👑 VVIP Convoy Arrival in 15 Min</div>
+      <div style="color:#cbd5e1; margin:3px 0">Chief Minister motorcade approaching Gate 1 VIP Sector from GT Road.</div>
+      <button onclick="alert('Gate 1 cleared & sanitized'); this.textContent='✅ Gate 1 Sanitized'; this.disabled=true;" style="padding:4px 8px; font-size:10px; background:#0284c7; border:none; border-radius:4px; color:#fff; margin-top:4px">Sanitize Gate 1</button>
+    </div>
+  </div>
+
+  <!-- HIDDEN COMPATIBILITY BUTTONS -->
+  <div style="display:none">
+    <button id="iso">3D view</button>
+    <button id="top">Plan view</button>
+    <button id="boxZoomBtn"></button>
+    <button id="floatingBoxZoomBtn"></button>
+  </div>
+
+  <script>
+    // Live Clock Update
+    setInterval(() => {
+      const el = document.getElementById('topClock');
+      if (el) {
+        const d = new Date();
+        el.textContent = d.toTimeString().split(' ')[0] + ' IST';
+      }
+    }, 1000);
+
+    // Alerts Drawer Toggle
+    const aBtn = document.getElementById('vcAlertsBtn');
+    const aDrawer = document.getElementById('vcAlertsDrawer');
+    const cDrawer = document.getElementById('closeAlertsDrawer');
+    if (aBtn && aDrawer) aBtn.onclick = () => aDrawer.style.display = aDrawer.style.display === 'block' ? 'none' : 'block';
+    if (cDrawer && aDrawer) cDrawer.onclick = () => aDrawer.style.display = 'none';
+
+    // Details Popup Close
+    const dpClose = document.getElementById('dpCloseBtn');
+    const dpPopup = document.getElementById('labelDetailPopup');
+    if (dpClose && dpPopup) dpClose.onclick = () => dpPopup.style.display = 'none';
+
+    // Brightness Slider Readout
+    const brSlider = document.getElementById('brightness');
+    const brVal = document.getElementById('brightVal');
+    if (brSlider && brVal) {
+      brSlider.oninput = () => brVal.textContent = brSlider.value + '%';
+    }
+  </script>
+</body>
+</html>

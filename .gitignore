@@ -1,0 +1,17 @@
+# Dependencies & package cache
+node_modules/
+**/node_modules/
+.pnpm-store/
+**/pnpm-store/
+**/*pnpm-store*
+**/.pnpm/
+**/.pnpm-store/**
+
+# Logs & temp files
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Operating System files
+.DS_Store
+Thumbs.db

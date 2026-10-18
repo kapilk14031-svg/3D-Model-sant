@@ -1,0 +1,15 @@
+from pathlib import Path
+p=Path('work/hall-release/src/bigPandal.ts');s=p.read_text(encoding='utf8')
+s=s.replace("overview: { angle: 0, elevation: 0.24, distance: 58, x: 0, z: -14 }","overview: { angle: -0.32, elevation: 0.82, distance: 145, x: 0, z: 0 }")
+s=s.replace('        transitionTo(p);',"        setCutaway(v==='overview');transitionTo(p);")
+# Self-contained hall export is separate from the outdoor scene.
+s=s.replace("import {gsap} from 'gsap';","import {gsap} from 'gsap';\nimport {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';")
+pos=s.index("  hud.querySelector('#exitPandalBtn')")
+s=s[:pos]+'''  const exportHall=document.createElement('button');exportHall.id='exportHallGLB';exportHall.textContent='Download hall GLB';exportHall.style.cssText='width:auto;margin:0;padding:6px 10px;font-size:11px';extras.append(exportHall);
+  exportHall.onclick=async()=>{exportHall.disabled=true;exportHall.textContent='Exporting…';try{hallGroup.updateMatrixWorld(true);const out=new THREE.Group();out.name='Pandal_Interior_Concept';out.userData={layout:'Illustrative concept; unsurveyed and not a capacity-approved plan',source:'Interior is not specified in the supplied traffic PDF'};hallGroup.traverse(o=>{if(!(o instanceof THREE.Mesh))return;let shown=true;for(let p:THREE.Object3D|null=o;p&&p!==hallGroup;p=p.parent)if(!p.visible)shown=false;if(!shown)return;if(o instanceof THREE.InstancedMesh){for(let i=0;i<o.count;i++){const matrix=new THREE.Matrix4();o.getMatrixAt(i,matrix);matrix.premultiply(o.matrixWorld);const clone=new THREE.Mesh(o.geometry,o.material);clone.matrixAutoUpdate=false;clone.matrix.copy(matrix);out.add(clone)}}else{const clone=new THREE.Mesh(o.geometry,o.material);clone.matrixAutoUpdate=false;clone.matrix.copy(o.matrixWorld);out.add(clone)}});const data=await new GLTFExporter().parseAsync(out,{binary:true,maxTextureSize:1024});if(!(data instanceof ArrayBuffer))throw Error('Invalid GLB export');const url=URL.createObjectURL(new Blob([data],{type:'model/gltf-binary'}));const a=document.createElement('a');a.href=url;a.download='pandal-hall-concept.glb';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}catch(error){exportHall.textContent='Export failed — retry';console.error(error)}finally{exportHall.disabled=false;if(exportHall.textContent!=='Export failed — retry')exportHall.textContent='Download hall GLB'}};
+''' +s[pos:]
+p.write_text(s,encoding='utf8')
+p=Path('work/hall-release/src/venue.js');s=p.read_text(encoding='utf8')
+s=s.replace("focus:(u,v)=>smoothView(angle,.7,130,(u-.5)*600,(v-.5)*450),\n  download", "focus:(u,v)=>smoothView(angle,.7,130,(u-.5)*600,(v-.5)*450),\n  restoreExamples:()=>{items=structuredClone(defaults);selected=-1},\n  download")
+p.write_text(s,encoding='utf8')
+p=Path('work/hall-release/src/main.tsx');s=p.read_text(encoding='utf8').replace("const click=(e:PointerEvent)=>{if(!placingRef.current)return;","const click=(e:PointerEvent)=>{if(v.bigPandal?.isInside()||!placingRef.current)return;");p.write_text(s,encoding='utf8')

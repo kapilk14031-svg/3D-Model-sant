@@ -1,0 +1,1 @@
+const fs=require('fs');let html=fs.readFileSync('template.html','utf8'),js=fs.readFileSync('bundle.js','utf8');fs.writeFileSync('index.html',html.replace('</body>','<script>'+js.replaceAll('</script','<\\/script')+'</script></body>'));console.log('Created offline index.html');

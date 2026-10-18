@@ -1,0 +1,2 @@
+from pathlib import Path
+p=Path('src/venue.js');s=p.read_text(encoding='utf8').replace("let fabric=new THREE.CanvasTexture(fabricCanvas);","let roofUV=[];for(let i=0;i<roofgeo.attributes.position.count;i++)roofUV.push((roofgeo.attributes.position.getX(i)+18)/36,(roofgeo.attributes.position.getZ(i)+42)/84);roofgeo.setAttribute('uv',new THREE.Float32BufferAttribute(roofUV,2));let fabric=new THREE.CanvasTexture(fabricCanvas);");p.write_text(s,encoding='utf8')

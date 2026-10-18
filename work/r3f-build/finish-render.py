@@ -1,0 +1,3 @@
+from pathlib import Path
+p=Path('src/venue.js');s=p.read_text(encoding='utf8');s=s.replace("'#70664e',.85","'#70664e',1.2").replace("'#fff0d8',2.1","'#fff0d8',2.6").replace('renderer.toneMappingExposure=.85','renderer.toneMappingExposure=1.0').replace('drawing?.95:.85','drawing?.95:1.0').replace("==='drawing'?.95:.85","==='drawing'?.95:1.0").replace('value="85"','value="100"').replace('let col=new THREE.Color(base);','let col=new THREE.Color(base).convertLinearToSRGB();');p.write_text(s,encoding='utf8')
+p=Path('src/main.tsx');s=p.read_text(encoding='utf8').replace("scene:v.scene,frameloop:","scene:v.scene,shadows:true,frameloop:");p.write_text(s,encoding='utf8')
