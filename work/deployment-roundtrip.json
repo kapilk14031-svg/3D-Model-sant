@@ -1,0 +1,67 @@
+{
+  "version": 3,
+  "items": [
+    {
+      "type": "officer",
+      "x": 0.5,
+      "y": 0.5,
+      "label": "Test team",
+      "qty": 4,
+      "rotationDeg": 0,
+      "zoneId": "auto",
+      "duty": {
+        "shift": "Day",
+        "reportingOfficer": "Test lead",
+        "notes": ""
+      },
+      "officers": [
+        {
+          "id": "ecab4ff1-56b5-44de-b7c4-09e2f302ee6f",
+          "name": "Demo officer",
+          "rank": "SI",
+          "phone": "9000000000"
+        }
+      ]
+    },
+    {
+      "type": "barricade",
+      "x": 0.5897912922454889,
+      "y": 0.5144923398938211,
+      "label": "Test barricade",
+      "qty": 3,
+      "rotationDeg": 15,
+      "zoneId": "auto",
+      "duty": {
+        "shift": "",
+        "reportingOfficer": "",
+        "notes": ""
+      },
+      "officers": []
+    }
+  ],
+  "zones": [
+    {
+      "id": "d31c44e3-cdb8-4ba4-8f50-64a999aa9190",
+      "name": "Test Sector",
+      "color": "#22b8a7",
+      "points": [
+        [
+          0.4299794047730312,
+          0.42995613732414023
+        ],
+        [
+          0.630038204038013,
+          0.42995613732414023
+        ],
+        [
+          0.6300382268581924,
+          0.6100090910882733
+        ],
+        [
+          0.4299794264828653,
+          0.6100090910882733
+        ]
+      ]
+    }
+  ]
+}
