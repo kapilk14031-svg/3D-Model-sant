@@ -1347,6 +1347,8 @@ function resize(){
 }
 window.onresize=resize;
 
+const activeKeys={};
+
 function animate(){
   if(streetView&&streetView.isActive()){
     streetView.updateCamera(camera);
@@ -1358,6 +1360,29 @@ function animate(){
       if(globalThis.advancedBandobastTick)globalThis.advancedBandobastTick();
       if(tour)angle+=.0012;
     }
+
+    // WASD & Arrow Keys camera movement on ground plane
+    if(!facilityModels||!facilityModels.isInsideAny()){
+      let moveX=0,moveZ=0;
+      if(activeKeys['w']||activeKeys['arrowup'])moveZ+=1;
+      if(activeKeys['s']||activeKeys['arrowdown'])moveZ-=1;
+      if(activeKeys['a']||activeKeys['arrowleft'])moveX-=1;
+      if(activeKeys['d']||activeKeys['arrowright'])moveX+=1;
+
+      if(moveX!==0||moveZ!==0){
+        let isShift=activeKeys['shift'];
+        let speed=(bigPandal&&bigPandal.isInside()?18:Math.max(16,distance*0.75))*(isShift?2.4:1.0)*(1/60);
+        let fX=-Math.sin(angle),fZ=-Math.cos(angle);
+        let rX=-fZ,rZ=fX;
+        let len=Math.hypot(moveX,moveZ);
+        let dirX=moveX/len,dirZ=moveZ/len;
+        target.x+=(rX*dirX+fX*dirZ)*speed;
+        target.z+=(rZ*dirX+fZ*dirZ)*speed;
+        target.x=Math.max(-350,Math.min(350,target.x));
+        target.z=Math.max(-280,Math.min(280,target.z));
+      }
+    }
+
     camera.position.set(
       target.x+Math.sin(angle)*Math.cos(elevation)*distance,
       target.y+Math.sin(elevation)*distance,
@@ -1673,13 +1698,44 @@ canvas.onpointerup=e=>{
   }
   drag=null;
 };
+const wheelRaycaster=new THREE.Raycaster();
+const wheelGroundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+const wheelGroundPos=new THREE.Vector3();
+
 canvas.onwheel=e=>{
   if(streetView&&streetView.isActive()){
     streetView.onWheel(e);
     return;
   }
   e.preventDefault();
-  distance=Math.max(bigPandal&&bigPandal.isInside()?8:25,Math.min(bigPandal&&bigPandal.isInside()?160:1000,distance+e.deltaY*.3));
+  const isInside=(bigPandal&&bigPandal.isInside())||(facilityModels&&facilityModels.isInsideAny());
+  const oldDist=distance;
+  const minDist=isInside?8:25;
+  const maxDist=isInside?160:1000;
+  
+  // Smooth exponential zoom step
+  const zoomFactor=Math.exp(e.deltaY*0.0015);
+  const newDist=Math.max(minDist,Math.min(maxDist,oldDist*zoomFactor));
+  
+  if(Math.abs(newDist-oldDist)>1e-4){
+    if(!isInside){
+      const rect=canvas.getBoundingClientRect();
+      const mouseX=((e.clientX-rect.left)/rect.width)*2-1;
+      const mouseY=-((e.clientY-rect.top)/rect.height)*2+1;
+      
+      wheelRaycaster.setFromCamera({x:mouseX,y:mouseY},camera);
+      wheelGroundPlane.constant=-target.y;
+      const hit=wheelRaycaster.ray.intersectPlane(wheelGroundPlane,wheelGroundPos);
+      if(hit&&Math.abs(wheelGroundPos.x)<=900&&Math.abs(wheelGroundPos.z)<=900){
+        const k=newDist/oldDist;
+        target.x+=(wheelGroundPos.x-target.x)*(1-k);
+        target.z+=(wheelGroundPos.z-target.z)*(1-k);
+        target.x=Math.max(-350,Math.min(350,target.x));
+        target.z=Math.max(-280,Math.min(280,target.z));
+      }
+    }
+    distance=newDist;
+  }
 };
 
 function smoothView(a,e,d,x=0,z=25){
@@ -1837,7 +1893,7 @@ if(razBtn){
     smoothView(-.25,.85,480,0,25);
     const zoomControls=document.getElementById('zoomControlsRow');
     if(zoomControls)zoomControls.style.display='none';
-    if($('#hint'))$('#hint').textContent='Drag to rotate · wheel to zoom · click a marker to edit';
+    if($('#hint'))$('#hint').textContent='WASD / Arrows: Move · Wheel: Zoom to cursor · Drag: Orbit';
     if($('#status'))$('#status').textContent='पूरे वेन्यू पर रीसेट किया गया';
   };
 }
@@ -1888,7 +1944,7 @@ $('#iso').parentElement.after(btn);
 let low=document.createElement('button');low.textContent='Street-level view';
 low.onclick=()=>smoothView(-.4,.12,90,0,80);
 btn.after(low);
-$('#hint').textContent='Drag: look around · Right-drag: pan · Wheel: zoom · Click: select';
+$('#hint').textContent='WASD / Arrows: Move · Wheel: Zoom to cursor · Drag: Orbit · Right-drag: Pan';
 
 // --- PDF Features & Landmarks ---
 const pdfFeatures=[
@@ -2681,11 +2737,25 @@ facilityModels=createFacilityModels({
 });
 
 window.addEventListener('keydown',e=>{
+  if(['input','textarea','select'].includes(document.activeElement?.tagName?.toLowerCase()))return;
+  const k=e.key.toLowerCase();
+  if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k)){
+    activeKeys[k]=true;
+  }
   if(e.key==='Escape'){
     if(streetView&&streetView.isActive())streetView.exitStreetView();
     else if(facilityModels&&facilityModels.isInsideAny())facilityModels.closeFacility();
     else if(bigPandal&&bigPandal.isInside())bigPandal.exitBigPandal();
   }
+});
+
+window.addEventListener('keyup',e=>{
+  const k=e.key.toLowerCase();
+  delete activeKeys[k];
+});
+
+window.addEventListener('blur',()=>{
+  for(let k in activeKeys)delete activeKeys[k];
 });
 
 globalThis.setVenueExteriorVisibility=visible=>{
@@ -2757,7 +2827,7 @@ panels.view.append(facCard);
 globalThis.openVenueFacility = (id) => facilityModels.openFacility(id);
 globalThis.facilityModels = facilityModels;
 
-$('#hint').textContent='Drag resource to move · Drag ground to orbit · Right-drag to pan · Wheel: zoom';
+$('#hint').textContent='WASD / Arrows: Move · Wheel: Zoom to cursor · Drag ground: Orbit · Right-drag: Pan';
 rebuild();
 resize();
 
