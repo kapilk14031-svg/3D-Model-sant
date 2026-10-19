@@ -1106,10 +1106,6 @@ for(let i=0;i<130;i++){
   let u=.08+rand()*.84,v=.09+rand()*.72;
   if(u<.14||u>.85||v<.14)tree(u,v,rand()>.4?'neem':'ashoka');
 }
-for(let i=0;i<14;i++){
-  tree(.35+i*.004,.73-i*.008,'ashoka');
-  tree(.365+i*.004,.73-i*.008,'ashoka');
-}
 
 // Security Gates & Checkpoints with Boom Barriers
 for(let [t,u,v] of [['GATE 1',.357,.75],['GATE 2',.495,.70],['GATE 3',.58,.68]]){
@@ -2077,20 +2073,11 @@ const structureExclusions = [
   { x: (0.506 - 0.5) * 600, z: (0.678 - 0.5) * 450, hw: 10, hd: 12 }
 ];
 
-const ashokaTrees = [];
-for (let i = 0; i < 10; i++) {
-  ashokaTrees.push(pt(0.35 + i * 0.004, 0.73 - i * 0.008));
-  ashokaTrees.push(pt(0.365 + i * 0.004, 0.73 - i * 0.008));
-}
-
 function isTentSpotBlocked(x, z, u, v) {
   if (v > 0.73) return true;
   if (v < 0.09) return true;
   for (let s of allRoadSegments) {
     if (distToSegment(x, z, s.x1, s.z1, s.x2, s.z2) < 4.8) return true;
-  }
-  for (let tr of ashokaTrees) {
-    if (Math.hypot(x - tr.x, z - tr.z) < 3.2) return true;
   }
   for (let ex of structureExclusions) {
     if (Math.abs(x - ex.x) < ex.hw + 2.5 && Math.abs(z - ex.z) < ex.hd + 2.5) return true;
