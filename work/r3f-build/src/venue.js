@@ -1983,6 +1983,213 @@ sign('TO DELHI',.07,.877,8);
 sign('TO AMBALA',.87,.61,8);
 sign('RAILWAY TO DELHI',.24,.17,8);
 
+// ========================================================
+// RESIDENTIAL ACCOMMODATION: SMALL TENTS FILL (GROUNDS B, C, D & SECTORS)
+// True to 75th Nirankari Sant Samagam Layout Blueprint SNM 15-11-2022
+// Fills ONLY empty spaces; avoids all roads, structures, and facilities.
+// ========================================================
+
+function createDetailedTentGeometry(w = 4.0, d = 5.5, hw = 1.85, hr = 2.75, ov = 0.2) {
+  const positions = [];
+  const uvs = [];
+
+  const hwX = w / 2, hdZ = d / 2;
+  const ovX = hwX + ov, ovZ = hdZ + ov;
+  const bH = 0.08, bX = hwX + 0.15, bZ = hdZ + 0.15;
+
+  function quad(p1, p2, p3, p4) {
+    positions.push(...p1, ...p2, ...p3);
+    positions.push(...p1, ...p3, ...p4);
+    uvs.push(0,0, 1,0, 1,1,  0,0, 1,1, 0,1);
+  }
+  function tri(p1, p2, p3) {
+    positions.push(...p1, ...p2, ...p3);
+    uvs.push(0,0, 1,0, 0.5,1);
+  }
+
+  // 1. Plinth base
+  quad([-bX, 0, -bZ], [bX, 0, -bZ], [bX, bH, -bZ], [-bX, bH, -bZ]);
+  quad([bX, 0, bZ], [-bX, 0, bZ], [-bX, bH, bZ], [bX, bH, bZ]);
+  quad([-bX, 0, bZ], [-bX, 0, -bZ], [-bX, bH, -bZ], [-bX, bH, bZ]);
+  quad([bX, 0, -bZ], [bX, 0, bZ], [bX, bH, bZ], [bX, bH, -bZ]);
+
+  // 2. Side Walls
+  quad([-hwX, bH, -hdZ], [-hwX, bH, hdZ], [-hwX, hw, hdZ], [-hwX, hw, -hdZ]);
+  quad([hwX, bH, hdZ], [hwX, bH, -hdZ], [hwX, hw, -hdZ], [hwX, hw, hdZ]);
+  quad([hwX, bH, -hdZ], [-hwX, bH, -hdZ], [-hwX, hw, -hdZ], [hwX, hw, -hdZ]);
+
+  // Front wall with doorway slit
+  quad([-hwX, bH, hdZ], [-0.55, bH, hdZ], [-0.55, hw, hdZ], [-hwX, hw, hdZ]);
+  quad([0.55, bH, hdZ], [hwX, bH, hdZ], [hwX, hw, hdZ], [0.55, hw, hdZ]);
+  quad([-0.55, bH, hdZ - 0.25], [0.55, bH, hdZ - 0.25], [0.55, hw, hdZ - 0.25], [-0.55, hw, hdZ - 0.25]);
+
+  // 3. Gable Ends
+  tri([-hwX, hw, hdZ], [hwX, hw, hdZ], [0, hr, hdZ]);
+  tri([hwX, hw, -hdZ], [-hwX, hw, -hdZ], [0, hr, -hdZ]);
+
+  // 4. Roof Slopes
+  quad([-ovX, hw, -ovZ], [-ovX, hw, ovZ], [0, hr, ovZ], [0, hr, -ovZ]);
+  quad([0, hr, -ovZ], [0, hr, ovZ], [ovX, hw, ovZ], [ovX, hw, -ovZ]);
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+const allRoadSegments = [];
+[...roads, ...extraRoads].forEach(r => {
+  const pts = r.map(([ru, rv]) => pt(ru, rv));
+  for (let i = 1; i < pts.length; i++) {
+    allRoadSegments.push({ x1: pts[i - 1].x, z1: pts[i - 1].z, x2: pts[i].x, z2: pts[i].z });
+  }
+});
+
+function distToSegment(px, pz, x1, z1, x2, z2) {
+  const l2 = (x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1);
+  if (l2 === 0) return Math.hypot(px - x1, pz - z1);
+  let t = ((px - x1) * (x2 - x1) + (pz - z1) * (z2 - z1)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (x1 + t * (x2 - x1)), pz - (z1 + t * (z2 - z1)));
+}
+
+const structureExclusions = [
+  // Grand Main Pandal
+  { x: (0.428 - 0.5) * 600, z: (0.63 - 0.5) * 450, hw: 22, hd: 48 },
+  // VIP Entrance plaza / red carpet
+  { x: (0.428 - 0.5) * 600, z: (0.71 - 0.5) * 450, hw: 16, hd: 20 },
+  // Langar Ground B (west)
+  { x: (0.376 - 0.5) * 600, z: (0.466 - 0.5) * 450, hw: 16, hd: 28 },
+  // Langar Ground C (central)
+  { x: (0.504 - 0.5) * 600, z: (0.361 - 0.5) * 450, hw: 16, hd: 28 },
+  // Langar Ground D (north)
+  { x: (0.538 - 0.5) * 600, z: (0.247 - 0.5) * 450, hw: 16, hd: 28 },
+  // Langar Gate 2
+  { x: (0.517 - 0.5) * 600, z: (0.602 - 0.5) * 450, hw: 16, hd: 22 },
+  // Exhibition
+  { x: (0.426 - 0.5) * 600, z: (0.535 - 0.5) * 450, hw: 24, hd: 12 },
+  // P2 buses & cars
+  { x: (0.321 - 0.5) * 600, z: (0.572 - 0.5) * 450, hw: 20, hd: 18 },
+  // VIP I-parking (Gate 1)
+  { x: (0.375 - 0.5) * 600, z: (0.723 - 0.5) * 450, hw: 18, hd: 22 },
+  // Police chowki
+  { x: (0.539 - 0.5) * 600, z: (0.676 - 0.5) * 450, hw: 14, hd: 14 },
+  // Petrol pump
+  { x: (0.506 - 0.5) * 600, z: (0.678 - 0.5) * 450, hw: 10, hd: 12 }
+];
+
+function isTentSpotBlocked(x, z, u, v) {
+  if (v > 0.69) return true;
+  if (v < 0.09) return true;
+  for (let s of allRoadSegments) {
+    if (distToSegment(x, z, s.x1, s.z1, s.x2, s.z2) < 5.2) return true;
+  }
+  for (let ex of structureExclusions) {
+    if (Math.abs(x - ex.x) < ex.hw + 2.5 && Math.abs(z - ex.z) < ex.hd + 2.5) return true;
+  }
+  return false;
+}
+
+const accommodationSectors = [
+  // 1. Ground B - South (Patna, Bihar, Bareilly, Allahabad, Gwalior)
+  { name: 'Ground-B South', u1: 0.185, u2: 0.365, v1: 0.490, v2: 0.585, color: '#f6f3eb' },
+  // 2. Ground B - Mid (Kanpur, Lucknow, Mussoorie, around Langar B)
+  { name: 'Ground-B Mid', u1: 0.185, u2: 0.365, v1: 0.375, v2: 0.485, color: '#f2ece0' },
+  // 3. Ground B - North (along diagonal boundary road)
+  { name: 'Ground-B North', u1: 0.220, u2: 0.380, v1: 0.260, v2: 0.370, color: '#ede5d5' },
+
+  // 4. Ground C - West (Residential blocks west of Langar C)
+  { name: 'Ground-C West', u1: 0.395, u2: 0.475, v1: 0.415, v2: 0.520, color: '#f5f1ea' },
+  // 5. Ground C - East (Delhi Zone 39, Sri Ganganagar Zone 17)
+  { name: 'Ground-C East', u1: 0.495, u2: 0.565, v1: 0.415, v2: 0.520, color: '#f7f4ed' },
+  // 6. Ground C - North (between Langar C and Ground D road)
+  { name: 'Ground-C North', u1: 0.410, u2: 0.550, v1: 0.375, v2: 0.410, color: '#f3ece2' },
+
+  // 7. Ground D - South (Punjab, Firozepur, Bhatinda, south of Langar D)
+  { name: 'Ground-D South', u1: 0.435, u2: 0.575, v1: 0.275, v2: 0.365, color: '#ede6d8' },
+  // 8. Ground D - North (Pathankot, Patiala, north of Langar D)
+  { name: 'Ground-D North', u1: 0.445, u2: 0.575, v1: 0.195, v2: 0.270, color: '#eae1d0' },
+
+  // 9. East Sector / P4 (Odisha, Nepal, Abroad Saints, Sewadal)
+  { name: 'East P4 Sector', u1: 0.575, u2: 0.675, v1: 0.410, v2: 0.585, color: '#f4ede2' },
+
+  // 10. Top-Right P3 Grid (Light Vehicles Car Parking & Accommodation)
+  { name: 'P3 Grid', u1: 0.680, u2: 0.775, v1: 0.080, v2: 0.205, color: '#f1ebd9' },
+
+  // 11. West Alighting & P1 transit camps
+  { name: 'West Alighting', u1: 0.175, u2: 0.245, v1: 0.600, v2: 0.735, color: '#ede5d4' }
+];
+
+const tentStepU = 0.0075; // 4.5m pitch
+const tentStepV = 0.0145; // 6.5m pitch
+
+const validTents = [];
+for (const sec of accommodationSectors) {
+  for (let u = sec.u1; u <= sec.u2; u += tentStepU) {
+    for (let v = sec.v1; v <= sec.v2; v += tentStepV) {
+      const uIndex = Math.round((u - sec.u1) / tentStepU);
+      const vIndex = Math.round((v - sec.v1) / tentStepV);
+      if (uIndex % 6 === 5) continue; // Walkway aisle
+      if (vIndex % 5 === 4) continue; // Walkway aisle
+
+      const p = pt(u, v);
+      if (!isTentSpotBlocked(p.x, p.z, u, v)) {
+        validTents.push({
+          x: p.x,
+          z: p.z,
+          u,
+          v,
+          baseColor: sec.color,
+          sector: sec.name
+        });
+      }
+    }
+  }
+}
+
+if (validTents.length > 0) {
+  const tentGeo = createDetailedTentGeometry(4.0, 5.5, 1.85, 2.75, 0.2);
+  const tentMat = new THREE.MeshStandardMaterial({
+    map: fabricTex,
+    roughness: 0.85,
+    metalness: 0.04,
+    side: THREE.DoubleSide
+  });
+
+  const tentInstanced = new THREE.InstancedMesh(tentGeo, tentMat, validTents.length);
+  tentInstanced.castShadow = true;
+  tentInstanced.receiveShadow = true;
+  tentInstanced.userData = {
+    isResidentialCamp: true,
+    totalTents: validTents.length,
+    label: 'Residential Accommodation Camps (Grounds B, C, D & P3)'
+  };
+
+  const dummy = new THREE.Object3D();
+  validTents.forEach((t, i) => {
+    dummy.position.set(t.x, 0, t.z);
+    dummy.rotation.y = (Math.sin(t.x * 0.3 + t.z * 0.7) * 0.06);
+    dummy.scale.set(
+      0.95 + (Math.sin(t.x * 2.1) + 1) * 0.05,
+      0.96 + (Math.cos(t.z * 1.8) + 1) * 0.04,
+      0.95 + (Math.sin(t.z * 2.5) + 1) * 0.05
+    );
+    dummy.updateMatrix();
+    tentInstanced.setMatrixAt(i, dummy.matrix);
+
+    const c = new THREE.Color(t.baseColor);
+    const lumOffset = Math.sin(t.u * 120 + t.v * 80) * 0.04;
+    c.offsetHSL(0, 0, lumOffset);
+    tentInstanced.setColorAt(i, c);
+  });
+
+  tentInstanced.instanceMatrix.needsUpdate = true;
+  if (tentInstanced.instanceColor) tentInstanced.instanceColor.needsUpdate = true;
+  structures.add(tentInstanced);
+  globalThis.residentialTents = tentInstanced;
+}
+
 const flows=new THREE.Group();scene.add(flows);
 function flow(points,color){
   for(let i=1;i<points.length;i++){
