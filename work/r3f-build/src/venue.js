@@ -2071,19 +2071,26 @@ const structureExclusions = [
   { x: (0.426 - 0.5) * 600, z: (0.535 - 0.5) * 450, hw: 24, hd: 12 },
   // P2 buses & cars
   { x: (0.321 - 0.5) * 600, z: (0.572 - 0.5) * 450, hw: 20, hd: 18 },
-  // VIP I-parking (Gate 1)
-  { x: (0.375 - 0.5) * 600, z: (0.723 - 0.5) * 450, hw: 18, hd: 22 },
   // Police chowki
   { x: (0.539 - 0.5) * 600, z: (0.676 - 0.5) * 450, hw: 14, hd: 14 },
   // Petrol pump
   { x: (0.506 - 0.5) * 600, z: (0.678 - 0.5) * 450, hw: 10, hd: 12 }
 ];
 
+const ashokaTrees = [];
+for (let i = 0; i < 10; i++) {
+  ashokaTrees.push(pt(0.35 + i * 0.004, 0.73 - i * 0.008));
+  ashokaTrees.push(pt(0.365 + i * 0.004, 0.73 - i * 0.008));
+}
+
 function isTentSpotBlocked(x, z, u, v) {
-  if (v > 0.69) return true;
+  if (v > 0.73) return true;
   if (v < 0.09) return true;
   for (let s of allRoadSegments) {
-    if (distToSegment(x, z, s.x1, s.z1, s.x2, s.z2) < 5.2) return true;
+    if (distToSegment(x, z, s.x1, s.z1, s.x2, s.z2) < 4.8) return true;
+  }
+  for (let tr of ashokaTrees) {
+    if (Math.hypot(x - tr.x, z - tr.z) < 3.2) return true;
   }
   for (let ex of structureExclusions) {
     if (Math.abs(x - ex.x) < ex.hw + 2.5 && Math.abs(z - ex.z) < ex.hd + 2.5) return true;
@@ -2118,7 +2125,10 @@ const accommodationSectors = [
   { name: 'P3 Grid', u1: 0.680, u2: 0.775, v1: 0.080, v2: 0.205, color: '#f1ebd9' },
 
   // 11. West Alighting & P1 transit camps
-  { name: 'West Alighting', u1: 0.175, u2: 0.245, v1: 0.600, v2: 0.735, color: '#ede5d4' }
+  { name: 'West Alighting', u1: 0.175, u2: 0.245, v1: 0.600, v2: 0.735, color: '#ede5d4' },
+
+  // 12. South-West VIP Gate 1 Front Accommodation / Transit Sector (Free Space next to Gate 1)
+  { name: 'Ground-B Gate 1 Front', u1: 0.235, u2: 0.380, v1: 0.585, v2: 0.725, color: '#f5efe4' }
 ];
 
 const tentStepU = 0.0075; // 4.5m pitch
